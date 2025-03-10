@@ -477,14 +477,6 @@ namespace MLOOP_L3
             }
         }
 
-        static void Task3()
-        {
-            Console.WriteLine();
-            PrintTextFile("Cat.txt");
-            Console.WriteLine("\n Тут поки-що немає програмного коду\n Зате є програмний кіт!\n");
-            PressAnyKeyToContinue();
-        }
-
         static void Setup()
         {
             Console.BackgroundColor = ConsoleColor.Black;
@@ -504,6 +496,372 @@ namespace MLOOP_L3
             Console.WriteLine($" Тема: {title}");
             Console.WriteLine(" Виконав Соломка Борис");
             Console.WriteLine(" №24");
+        }
+
+        // Структури даних для представлення графа
+        static int vertices;
+        static int[][] adjacencyList;
+        static int[,] weights;
+        static int[] adjacencyCount; // кількість суміжних вершин для кожної вершини
+
+        // Ініціалізація графа
+        static void InitializeGraph(int v, int maxEdges)
+        {
+            vertices = v;
+            adjacencyList = new int[vertices][];
+            adjacencyCount = new int[vertices];
+            weights = new int[vertices, vertices];
+
+            // Ініціалізуємо масиви для кожної вершини
+            for (int i = 0; i < vertices; i++)
+            {
+                adjacencyList[i] = new int[maxEdges]; // максимальна кількість ребер для вершини
+                adjacencyCount[i] = 0; // поки немає жодних ребер
+            }
+        }
+
+        // Додавання ребра з вагою
+        static void AddEdge(int source, int destination, int weight)
+        {
+            // Додаємо ребро source -> destination
+            adjacencyList[source][adjacencyCount[source]] = destination;
+            adjacencyCount[source]++;
+
+            // Додаємо ребро destination -> source (для неорієнтованого графу)
+            adjacencyList[destination][adjacencyCount[destination]] = source;
+            adjacencyCount[destination]++;
+
+            // Зберігаємо вагу ребра
+            weights[source, destination] = weight;
+            weights[destination, source] = weight; // для неорієнтованого графу
+        }
+
+        // Метод для знаходження всіх гамільтонових шляхів
+        static int[][][] FindAllHamiltonianPaths()
+        {
+            // Максимальна кількість можливих гамільтонових шляхів
+            int maxPaths = Factorial(vertices);
+            int[][][] allPaths = new int[maxPaths][][];
+            int pathCount = 0;
+
+            bool[] visited = new bool[vertices];
+            int[] path = new int[vertices];
+
+            // Стартуємо з кожної вершини
+            for (int startVertex = 0; startVertex < vertices; startVertex++)
+            {
+                Array.Fill(visited, false);
+                path[0] = startVertex;
+                visited[startVertex] = true;
+
+                FindAllHamiltonianPathsUtil(visited, path, 1, allPaths, ref pathCount);
+            }
+
+            // Обрізаємо масив до фактичної кількості знайдених шляхів
+            int[][][] result = new int[pathCount][][];
+            for (int i = 0; i < pathCount; i++)
+            {
+                result[i] = allPaths[i];
+            }
+
+            return result;
+        }
+
+        // Допоміжна функція для пошуку всіх гамільтонових шляхів
+        static void FindAllHamiltonianPathsUtil(bool[] visited, int[] path, int pos, int[][][] allPaths, ref int pathCount)
+        {
+            // Якщо шлях містить всі вершини
+            if (pos == vertices)
+            {
+                // Копіюємо поточний шлях в результат
+                allPaths[pathCount] = new int[1][];
+                allPaths[pathCount][0] = new int[vertices];
+                Array.Copy(path, allPaths[pathCount][0], vertices);
+                pathCount++;
+                return;
+            }
+
+            int current = path[pos - 1];
+            for (int i = 0; i < adjacencyCount[current]; i++)
+            {
+                int neighbor = adjacencyList[current][i];
+                if (!visited[neighbor])
+                {
+                    // Додаємо сусіда до шляху
+                    visited[neighbor] = true;
+                    path[pos] = neighbor;
+
+                    // Рекурсивно шукаємо шляхи
+                    FindAllHamiltonianPathsUtil(visited, path, pos + 1, allPaths, ref pathCount);
+
+                    // Backtracking
+                    visited[neighbor] = false;
+                }
+            }
+        }
+
+        // Метод для знаходження гамільтонових шляхів між вказаними вершинами
+        static int[][][] FindHamiltonianPathsBetween(int start, int end)
+        {
+            // Максимальна кількість можливих гамільтонових шляхів
+            int maxPaths = Factorial(vertices - 1);
+            int[][][] paths = new int[maxPaths][][];
+            int pathCount = 0;
+
+            bool[] visited = new bool[vertices];
+            int[] path = new int[vertices];
+
+            path[0] = start;
+            visited[start] = true;
+
+            FindHamiltonianPathsBetweenUtil(visited, path, 1, paths, ref pathCount, end);
+
+            // Обрізаємо масив до фактичної кількості знайдених шляхів
+            int[][][] result = new int[pathCount][][];
+            for (int i = 0; i < pathCount; i++)
+            {
+                result[i] = paths[i];
+            }
+
+            return result;
+        }
+
+        // Допоміжна функція для пошуку гамільтонових шляхів між вказаними вершинами
+        static void FindHamiltonianPathsBetweenUtil(bool[] visited, int[] path, int pos, int[][][] paths, ref int pathCount, int end)
+        {
+            int current = path[pos - 1];
+
+            // Якщо досягли кінцевої вершини і відвідали всі вершини
+            if (current == end && pos == vertices)
+            {
+                // Копіюємо поточний шлях в результат
+                paths[pathCount] = new int[1][];
+                paths[pathCount][0] = new int[vertices];
+                Array.Copy(path, paths[pathCount][0], vertices);
+                pathCount++;
+                return;
+            }
+
+            for (int i = 0; i < adjacencyCount[current]; i++)
+            {
+                int neighbor = adjacencyList[current][i];
+                if (!visited[neighbor])
+                {
+                    // Додаємо сусіда до шляху
+                    visited[neighbor] = true;
+                    path[pos] = neighbor;
+
+                    // Рекурсивно шукаємо шляхи
+                    FindHamiltonianPathsBetweenUtil(visited, path, pos + 1, paths, ref pathCount, end);
+
+                    visited[neighbor] = false;
+                }
+            }
+        }
+
+        // Метод для знаходження всіх гамільтонових контурів
+        static int[][][] FindAllHamiltonianCircuits()
+        {
+            // Максимальна кількість можливих гамільтонових контурів
+            int maxCircuits = Factorial(vertices - 1);
+            int[][][] allCircuits = new int[maxCircuits][][];
+            int circuitCount = 0;
+
+            bool[] visited = new bool[vertices];
+            int[] path = new int[vertices + 1]; // +1 для замикання контуру
+
+            // Починаємо з вершини 0
+            path[0] = 0;
+            visited[0] = true;
+
+            FindAllHamiltonianCircuitsUtil(visited, path, 1, allCircuits, ref circuitCount, 0);
+
+            // Обрізаємо масив до фактичної кількості знайдених контурів
+            int[][][] result = new int[circuitCount][][];
+            for (int i = 0; i < circuitCount; i++)
+            {
+                result[i] = allCircuits[i];
+            }
+
+            return result;
+        }
+
+        // Допоміжна функція для пошуку всіх гамільтонових контурів
+        static void FindAllHamiltonianCircuitsUtil(bool[] visited, int[] path, int pos, int[][][] allCircuits, ref int circuitCount, int startVertex)
+        {
+            // Якщо шлях містить всі вершини
+            if (pos == vertices)
+            {
+                int lastVertex = path[pos - 1];
+                bool hasEdgeToStart = false;
+
+                // Перевіряємо, чи існує ребро від останньої вершини до початкової
+                for (int i = 0; i < adjacencyCount[lastVertex]; i++)
+                {
+                    if (adjacencyList[lastVertex][i] == startVertex)
+                    {
+                        hasEdgeToStart = true;
+                        break;
+                    }
+                }
+
+                if (hasEdgeToStart)
+                {
+                    // Додаємо початкову вершину, щоб замкнути контур
+                    path[pos] = startVertex;
+
+                    // Копіюємо поточний контур в результат
+                    allCircuits[circuitCount] = new int[1][];
+                    allCircuits[circuitCount][0] = new int[vertices + 1];
+                    Array.Copy(path, allCircuits[circuitCount][0], vertices + 1);
+                    circuitCount++;
+                }
+                return;
+            }
+
+            int current = path[pos - 1];
+            for (int i = 0; i < adjacencyCount[current]; i++)
+            {
+                int neighbor = adjacencyList[current][i];
+                if (!visited[neighbor])
+                {
+                    // Додаємо сусіда до шляху
+                    visited[neighbor] = true;
+                    path[pos] = neighbor;
+
+                    // Рекурсивно шукаємо контури
+                    FindAllHamiltonianCircuitsUtil(visited, path, pos + 1, allCircuits, ref circuitCount, startVertex);
+
+                    // Backtracking
+                    visited[neighbor] = false;
+                }
+            }
+        }
+
+        // Метод для знаходження мінімального гамільтонового контуру
+        static int[] FindMinHamiltonianCircuit()
+        {
+            int[][][] allCircuits = FindAllHamiltonianCircuits();
+            if (allCircuits.Length == 0)
+                return new int[0];
+
+            int minWeight = int.MaxValue;
+            int[] minCircuit = null;
+
+            for (int i = 0; i < allCircuits.Length; i++)
+            {
+                int weight = CalculateCircuitWeight(allCircuits[i][0]);
+                if (weight < minWeight)
+                {
+                    minWeight = weight;
+                    minCircuit = new int[allCircuits[i][0].Length];
+                    Array.Copy(allCircuits[i][0], minCircuit, allCircuits[i][0].Length);
+                }
+            }
+
+            Console.WriteLine($"Мінімальна вага контуру: {minWeight}");
+            return minCircuit;
+        }
+
+        // Метод для знаходження максимального гамільтонового контуру
+        static int[] FindMaxHamiltonianCircuit()
+        {
+            int[][][] allCircuits = FindAllHamiltonianCircuits();
+            if (allCircuits.Length == 0)
+                return new int[0];
+
+            int maxWeight = int.MinValue;
+            int[] maxCircuit = null;
+
+            for (int i = 0; i < allCircuits.Length; i++)
+            {
+                int weight = CalculateCircuitWeight(allCircuits[i][0]);
+                if (weight > maxWeight)
+                {
+                    maxWeight = weight;
+                    maxCircuit = new int[allCircuits[i][0].Length];
+                    Array.Copy(allCircuits[i][0], maxCircuit, allCircuits[i][0].Length);
+                }
+            }
+
+            Console.WriteLine($"Максимальна вага контуру: {maxWeight}");
+            return maxCircuit;
+        }
+
+        // Обчислення ваги контуру
+        static int CalculateCircuitWeight(int[] circuit)
+        {
+            int weight = 0;
+            for (int i = 0; i < circuit.Length - 1; i++)
+            {
+                weight += weights[circuit[i], circuit[i + 1]];
+            }
+            return weight;
+        }
+
+        // Допоміжна функція для обчислення факторіалу
+        static int Factorial(int n)
+        {
+            if (n <= 1)
+                return 1;
+            return n * Factorial(n - 1);
+        }
+
+        // Виведення знайдених шляхів
+        static void PrintPaths(int[][][] paths, string label)
+        {
+            Console.WriteLine($"\n{label} ({paths.Length}):");
+            for (int i = 0; i < paths.Length; i++)
+            {
+                Console.Write($"{i + 1}. ");
+                Console.WriteLine(string.Join(" -> ", paths[i][0]));
+            }
+        }
+
+        // Виведення знайденого контуру
+        static void PrintCircuit(int[] circuit, string label)
+        {
+            Console.WriteLine($"\n{label}:");
+            if (circuit.Length == 0)
+            {
+                Console.WriteLine("Гамільтонового контуру не знайдено");
+                return;
+            }
+            Console.WriteLine(string.Join(" -> ", circuit));
+        }
+
+        static void Task3()
+        {
+            // Приклад використання
+            int vertices = 5;
+            int maxEdgesPerVertex = 4; // максимальна кількість ребер для вершини
+            InitializeGraph(vertices, maxEdgesPerVertex);
+
+            // Додаємо ребра з вагами
+            AddEdge(0, 1, 2);
+            AddEdge(0, 3, 6);
+            AddEdge(1, 2, 3);
+            AddEdge(1, 3, 8);
+            AddEdge(1, 4, 5);
+            AddEdge(2, 4, 7);
+            AddEdge(3, 4, 9);
+
+            // Знаходимо всі гамільтонові шляхи
+            int[][][] allPaths = FindAllHamiltonianPaths();
+            PrintPaths(allPaths, "Всі гамільтонові шляхи");
+
+            // Знаходимо гамільтонові шляхи між вершинами 0 і 4
+            int[][][] pathsBetween = FindHamiltonianPathsBetween(0, 4);
+            PrintPaths(pathsBetween, "Гамільтонові шляхи від 0 до 4");
+
+            // Знаходимо мінімальний і максимальний гамільтонові контури
+            int[] minCircuit = FindMinHamiltonianCircuit();
+            PrintCircuit(minCircuit, "Мінімальний гамільтоновий контур");
+
+            int[] maxCircuit = FindMaxHamiltonianCircuit();
+            PrintCircuit(maxCircuit, "Максимальний гамільтоновий контур");
+            Console.WriteLine();
+            PressAnyKeyToContinue();
         }
 
         static void Main(string[] args)
