@@ -500,7 +500,7 @@ namespace MLOOP_L3
 
         // Структури даних для представлення графа
         static int vertices;
-        static int[][] adjacencyList;
+        static int[][] adjacencyList; // Фактично, матриця суміжностей
         static int[,] weights;
         static int[] adjacencyCount; // кількість суміжних вершин для кожної вершини
 
@@ -799,7 +799,6 @@ namespace MLOOP_L3
             return weight;
         }
 
-        // Допоміжна функція для обчислення факторіалу
         static int Factorial(int n)
         {
             if (n <= 1)
@@ -830,6 +829,41 @@ namespace MLOOP_L3
             Console.WriteLine(string.Join(" -> ", circuit));
         }
 
+        static void ReadGraphFromFile(string fileName = "graph.txt")
+        {
+            using (StreamReader readText = new StreamReader(fileName))
+            {
+                string line = readText.ReadLine();
+                if (line == null) { return; }
+
+                // Зчитуємо кількість вершин
+                vertices = int.Parse(line);
+
+                // Зчитуємо максимальну кількість ребер (можна обчислити або вказати у файлі)
+                line = readText.ReadLine();
+                if (line == null) { return; }
+
+                int maxEdgesPerVertex = int.Parse(line.Trim());
+
+                // Ініціалізуємо граф
+                InitializeGraph(vertices, maxEdgesPerVertex);
+
+                // Зчитуємо ребра та їх ваги
+                while ((line = readText.ReadLine()) != null)
+                {
+                    string[] parts = line.Split();
+                    if (parts.Length >= 3) // Формат: вершина1 вершина2 вага
+                    {
+                        int source = int.Parse(parts[0]);
+                        int destination = int.Parse(parts[1]);
+                        int weight = int.Parse(parts[2]);
+
+                        AddEdge(source, destination, weight);
+                    }
+                }
+            }
+        }
+
         static void Task3()
         {
             // Приклад використання
@@ -837,14 +871,7 @@ namespace MLOOP_L3
             int maxEdgesPerVertex = 4; // максимальна кількість ребер для вершини
             InitializeGraph(vertices, maxEdgesPerVertex);
 
-            // Додаємо ребра з вагами
-            AddEdge(0, 1, 2);
-            AddEdge(0, 3, 6);
-            AddEdge(1, 2, 3);
-            AddEdge(1, 3, 8);
-            AddEdge(1, 4, 5);
-            AddEdge(2, 4, 7);
-            AddEdge(3, 4, 9);
+            ReadGraphFromFile();
 
             // Знаходимо всі гамільтонові шляхи
             int[][][] allPaths = FindAllHamiltonianPaths();
