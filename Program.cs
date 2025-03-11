@@ -866,11 +866,6 @@ namespace MLOOP_L3
 
         static void Task3()
         {
-            // Приклад використання
-            int vertices = 5;
-            int maxEdgesPerVertex = 4; // максимальна кількість ребер для вершини
-            InitializeGraph(vertices, maxEdgesPerVertex);
-
             ReadGraphFromFile();
 
             // Знаходимо всі гамільтонові шляхи
