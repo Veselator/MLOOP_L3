@@ -539,7 +539,7 @@ namespace MLOOP_L3
         // Метод для знаходження всіх гамільтонових шляхів
         static string[] FindAllHamiltonianPaths()
         {
-            string[] allPaths = new string[0];
+            string[] allPaths = Array.Empty<string>();
             bool[] visited = new bool[vertices];
 
             // Стартуємо з кожної вершини
